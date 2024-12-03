@@ -3,7 +3,7 @@
 
 from typing_extensions import Annotated, TypedDict
 from agents.agent.state import State
-from models.constants import ChatRoles
+from policies.pydantic_models.constants import ChatRoles
 
 
 class PromptState(TypedDict):
@@ -30,5 +30,11 @@ class PromptState(TypedDict):
         bool,
         State.in_field(
             "Status of the input refinement process."
+        )
+    ]
+    request_id: Annotated[
+        int,
+        State.in_field(
+            "user request id"
         )
     ]

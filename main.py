@@ -3,9 +3,10 @@ Driving code file for this project.
 """
 import os
 
+import requests
+
 from agents.supervisor.supervisor_state import SupervisorState
-from agents.prompt.prompt_graph import PromptGraph
-from agents.prompt.prompt_state import PromptState
+from agents.prompt_agent.prompt_graph import PromptGraph
 from configs.database import get_client_local_db_file_path
 from configs.project_config import ProjectConfig
 from configs.project_path import set_project_path
@@ -22,6 +23,7 @@ if __name__ == "__main__":
 
     # Initialize the project config
     config = ProjectConfig()
+
     logger.info("Project configuration loaded!")
 
     USER_ID = int(os.getenv("USER_ID"))
@@ -36,8 +38,6 @@ if __name__ == "__main__":
     prompt_engineer_graph = PromptGraph(
         prompt_config.llm, persistance_db_path=DATABASE_PATH)
 
-    # setup database
-    # Tables are created only if they doesn't exist
     db.setup_db()
 
     PROJECT_INPUT = """
@@ -46,7 +46,54 @@ if __name__ == "__main__":
     Utilize a MongoDB database (using the provided connection details: \"mongodb://localhost:27017/titlerequest\").
     Host the application at "https://crbe.com".
     """
-    # PROJECT_INPUT
+
+    count = 0
+
+    project_details = {
+        "user_input_prompt_message": PROJECT_INPUT,
+        "request_id": count
+    }
+
+    metadata = {
+        "user_id": USER_ID,
+        "session_id": 0,
+        "organisation_id": 0,
+        "project_id": 1,
+        "application_id": 1,
+        "user_email": "a@gmail.com",
+        "project_input": PROJECT_INPUT,
+        "usergitid": "123",
+        "task_id": 1,
+        "agent_name": config.agents.prompt.agent_name,
+        "agent_id": config.agents.prompt.agent_id,
+        "thread_id": "1",
+        "system_process_id": 0
+    }
+
+    logger.info("metadata", metadata)
+
+    # try:
+    #     response = requests.post(
+    #         "http://localhost:8000/metadata", json=metadata)
+    #     response.raise_for_status()  # Raise an exception for HTTP errors
+
+    #     returned_data = response.json()
+    #     logger.info("Meta data has been created! %s", returned_data)
+    # except requests.exceptions.RequestException as e:
+    #     logger.error("Error creating metadata: %s", e)
+
+    try:
+        response = requests.post(
+            "http://localhost:8000/project_info", json=project_details)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        returned_data = response.json()
+        count += 1
+        logger.info("Project Input has been created! %s",
+                    returned_data['user_input_prompt_message'])
+    except requests.exceptions.RequestException as e:
+        logger.error("Error creating project input: %s", e)
+
     graph_config = {
         "configurable": {
             "thread_id": prompt_config.thread_id
@@ -55,17 +102,19 @@ if __name__ == "__main__":
 
     graph_config['recursion_limit'] = 500
     prompt_response = prompt_engineer_graph.app.stream({
-        'original_user_input': '',
+        'original_user_input': returned_data['user_input_prompt_message'],
         'messages': [],
-        'status': False
+        'status': False,
+        'request_id': returned_data['request_id']
     }, graph_config)
+
     for response in prompt_response:
         if "__end__" not in response:
             continue
         else:
             break
 
-    # logger.info(f"Project input refined: {prompt_response}")
+    logger.info(f"Project input refined: {prompt_response}")
 
     LICENSE_URL = "https://raw.githubusercontent.com/intelops/tarian-detector/8a4ff75fe31c4ffcef2db077e67a36a067f1437b/LICENSE"
     LICENSE_TEXT = "SPDX-License-Identifier: Apache-2.0\nCopyright 2024 Authors of CRBE & the Organization created CRBE"
@@ -92,10 +141,6 @@ if __name__ == "__main__":
         sessions_details.append(session_detail)
 
         agent.set_thread_id(session_detail['id'])
-
-    # logger.info(
-    #     f"Records for new session has been created in the database with ids: {", ".join(f"{value.agent_id}: {value.thread_id}" for key, value in config.agents_config.items())}")
-    # Database insertion - END
 
     genpod_team = TeamMembers(DATABASE_PATH, config.collection_name)
     genpod_team.supervisor.set_recursion_limit(500)
