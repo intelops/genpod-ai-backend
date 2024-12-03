@@ -16,7 +16,7 @@ class SupervisorPrompts():
         Provide the binary score as a JSON with a single key 'score' and no premable or explanation.""",
         input_variables=["question", "document"],
     )
-    
+
     response_evaluator_prompt = PromptTemplate(
         template="""You are a Supervisor responsible for evaluating the completeness of responses from team members. Your task is to determine if a given response requires additional information or clarification.
 
@@ -44,7 +44,7 @@ class SupervisorPrompts():
     architect_call_prompt = PromptTemplate(
         template="""This task is part of Project Initiation Phase and has two deliverables, a project requirements document and a list of project deliverables.\n
             Do not assume anything and request for additional information if provided information is not sufficient to complete the task or something is missing."""
-        )
+    )
 
     additional_info_req_prompt = PromptTemplate(
         template="""A fellow agent is stuck with something and is requesting additional info on the question"""
@@ -69,7 +69,7 @@ class SupervisorPrompts():
             example output format: "['question1','question2','question3']"
             Use this additional context if an error exists in output: {context}
             """,
-            input_variables=["user_prompt", "context"]
+        input_variables=["user_prompt", "context"]
     )
 
     follow_up_questions = PromptTemplate(
@@ -107,8 +107,8 @@ class SupervisorPrompts():
                     Follow-up Query: What are the key MISMO v3.6 XML elements and data structures required for implementing a Title Requests GET service in .NET?
 
                     Your evaluation and output:""",
-                    input_variables=["user_query", "initial_rag_response"]
-        )
+        input_variables=["user_query", "initial_rag_response"]
+    )
 
     ideal_init_rag_questionaire_prompt = PromptTemplate(
         template="""Given the user prompt: "{user_prompt}", generate a comprehensive list of questions to query the knowledge base which is a vector DB. 
@@ -157,5 +157,77 @@ class SupervisorPrompts():
             example output format: "['question1','question2','question3']"
             Use this additional context if an error exists in output: {context}
             """,
-            input_variables=["user_prompt", "context"]
+        input_variables=["user_prompt", "context"]
     )
+
+    classifier_prompt = PromptTemplate(
+        template="""
+        User input {user_prompt}
+                You are AgentMatcher, an intelligent assistant designed to analyze the project flow to match the query with the most suitable agent. 
+                Your task is to understand the project flow, identify key entities and intents, and determine which agent would be best equipped at any given point based on the status provided and flow of interactions.
+                
+
+                Categorize the agent into one of the following agent types: <agents> {agent_descriptions} </agents>
+
+                High Priority:
+                1. When selecting the next agent, give the project flow high priority to maintain consistency and follow-up context. Always check for relevant history before selecting a new agent.
+                2. Select your agent also basing on the flags.
+            Guidelines for Classification:
+                Project Flow: Understand the project flow to know the step by step process. 
+                Project Flow: {project_flow}
+                Agent Type: Choose the most appropriate agent type based on the project flow, ensuring consistency with past interactions where applicable.
+                 High Priority: Look at the data here serialized output below and extract boolean flag information from it
+                to select the next agent. 
+                {flags}
+                Current Agent and Status:
+                Consider the current agent details and status before deciding the next course of action.
+                Check the project status and refer to the message history to determine the course of action.
+                    Calling Agent: {current_agent}
+                    task status: {current_status}
+                    Project status: {project_status}
+                    Conversation History: {history}
+                    
+                Confidence: Indicate how confident you are in the classification.
+                    High: Clear, straightforward requests or follow-ups
+                    Medium: Requests with some ambiguity but likely classification
+                    Low: Vague or multi-faceted messages that could fit multiple categories
+                 Reason: Provide a brief explanation of why a particular agent was selected based on the project flow and other indicators like the project status, task status and current agent. Mention the flags in the reason.
+
+                You can track the visited agents here:
+                <visited_agents>
+                {visited_agents}
+                </visited_agents>           
+                
+                
+                Skip any preamble and provide only the response in the specified format.
+                    
+                        """,
+        input_variables=["agent_descriptions", "history",
+                         "current_agent", "current_status", "user_prompt", "visited_agents", "project_status", "project_flow", "flags"],
+    )
+
+ # Examples:
+
+    #     Selected Agent: Architect agent
+    #     Confidence: 0.95
+    #     Reason: The calling agent is RAG, so you have all the required information to proceed to the architectural agent. Also the project status is INITIAL and Task status is  NEW.
+
+    #     Selected Agent: RAG agent
+    #     Confidence: 0.95
+    #     Reason: The calling agent is Architect agent, so you have need more information to proceed. Also the project status is INITIAL and Task status is  AWAITING.
+
+    #     Selected Agent: Supervisor agent
+    #     Confidence: 0.95
+    #     Reason: The calling agent is Architect agent. Also the project status is EXECUTING and Task status is DONE.
+
+    #     Selected Agent: Planner agent
+    #     Confidence: 0.95
+    #     Reason: The calling agent is Supervisor agent. Also the project status is EXECUTING and Task status is NEW. The flag are_planned_task_in_progress is False
+
+    #     Selected Agent: Test Code Generator agent
+    #     Confidence: 0.95
+    #     Reason: The flag are_planned_task_in_progress is True, is_function_generation_required is True. is_test_code_generated is False
+
+    #     Selected Agent: Coder agent
+    #     Confidence: 0.95
+    #     Reason: The project status is EXECUTING. The flag are_planned_task_in_progress is True, is_code_generate is False.

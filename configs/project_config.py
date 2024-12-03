@@ -11,6 +11,7 @@ from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
+
 @dataclass
 class GraphInfo:
     """
@@ -22,6 +23,7 @@ class GraphInfo:
     """
     graph_name: str
     graph_id: str
+
 
 @dataclass
 class AgentInfo:
@@ -39,6 +41,7 @@ class AgentInfo:
     agent_id: str
     alias: str = ""
     description: str = ""
+
 
 class LLMConfig:
     """
@@ -90,8 +93,10 @@ class LLMConfig:
                 model_kwargs=self.model_kwargs
             )
         else:
-            raise ValueError(f"Unsupported model configuration: {self.model}. Only ChatOpenAI is currently supported.")
-        
+            raise ValueError(
+                f"Unsupported model configuration: {self.model}. Only ChatOpenAI is currently supported.")
+
+
 class AgentConfig(AgentInfo):
     """
     Configuration for an agent, including its LLM settings and an optional thread ID.
@@ -103,7 +108,7 @@ class AgentConfig(AgentInfo):
         thread_id (Union[int, None]): Optional thread ID for the agent.
     """
 
-    def __init__(self, agent_name: str, agent_id: str, llm_config: LLMConfig) -> None:
+    def __init__(self, agent_name: str, agent_id: str, alias: str, description: str, llm_config: LLMConfig) -> None:
         """
         Initializes the agent configuration with the given parameters.
 
@@ -112,7 +117,7 @@ class AgentConfig(AgentInfo):
             agent_id (str): The unique identifier of the agent.
             llm_config (LLMConfig): The LLM configuration for this agent.
         """
-        super().__init__(agent_name, agent_id)
+        super().__init__(agent_name, agent_id, alias, description)
         self.llm: ChatOpenAI = llm_config.create_llm()
         self.thread_id: Union[int, None] = None
 
@@ -124,6 +129,7 @@ class AgentConfig(AgentInfo):
             thread_id (int): The thread ID to be set.
         """
         self.thread_id = thread_id
+
 
 class ProjectGraphs(Enum):
     """
@@ -147,6 +153,7 @@ class ProjectGraphs(Enum):
     tests_generator = GraphInfo("Unit Tester Graph", "GRPH_06_TST")
     modernizer = GraphInfo("Knowledge Graph Generator Graph", "GRPH_07_MOD")
     reviewer = GraphInfo("Code Reviewer Graph", "GRPH_08_REV")
+    prompt = GraphInfo("Prompt Refinement Graph", "GRPH_09_PRM")
 
     @property
     def graph_name(self) -> str:
@@ -168,6 +175,7 @@ class ProjectGraphs(Enum):
         """
         return self.value.graph_id
 
+
 class ProjectAgents(Enum):
     """
     Enum that holds all the agents used by the project.
@@ -185,56 +193,57 @@ class ProjectAgents(Enum):
     """
 
     supervisor = AgentInfo(
-        "Project Supervisor", 
+        "Project Supervisor",
         "SUP_01",
         alias="supervisor",
         description="Coordinates with the team, assigns tasks, and guides the team toward successful project completion."
     )
 
     architect = AgentInfo(
-        "Solution Architect", 
+        "Solution Architect",
         "ARC_02",
         alias="architect",
-        description="Defines the project requirements and outlines the architectural framework."
+        description="Outlines the architectural framework."
     )
-
+# Takes current_task, project_status, user input, and project details, and outputs tasks, requirements_document, and coder_inputs for call_coder. It also updates project status, folder structure, and other project parameters
     coder = AgentInfo(
-        "Software Engineer", 
+        "Software Engineer",
         "ENG_03",
         alias="coder",
         description="Develops and writes code to the tasks assigned."
     )
-
+# Uses coder_inputs from call_architect to process the task, and outputs current_task and agents_status, handling task completion or awaiting further input
     rag = AgentInfo(
-        "Document Repository Manager", 
+        "Document Repository Manager",
         "RAG_04",
         alias="rag",
-        description="Oversees the vector database, manages document and file storage, and provides relevant information in response to queries."
+        description="Gathers information based on the user query and provides it to the team. Triggered at the **beginning** of the project, or during development and provides relevant information in response to queries. Oversees the vector database, manages document and file storage."
     )
 
+#  Processes question from current_task and returns additional_info and rag_query_answer, which are used by other agents like call_architect and call_supervisor to provide further details
     planner = AgentInfo(
-        "Project Planner", 
+        "Project Planner",
         "PLN_05",
         alias="planner",
         description="Creates detailed plans for task execution, based on requirements provided."
     )
-
+#  Takes current_task and project_path as inputs, and outputs planned_tasks and planned_task_requirements, which are later used to assign tasks to call_coder.
     tests_generator = AgentInfo(
-        "Unit Tester", 
+        "Unit Tester",
         "TST_06",
-        alias="tests_generator",
+        alias="test_code_generator",
         description="Develops and executes unit test cases to ensure code quality and functionality."
     )
 
     modernizer = AgentInfo(
-        "Knowledge Graph Generator", 
+        "Knowledge Graph Generator",
         "MOD_07",
         alias="modernizer",
         description="Generates and maintains the knowledge graph for the project, facilitating data relationships and insights."
     )
 
     human = AgentInfo(
-        "Human Intervention Specialist", 
+        "Human Intervention Specialist",
         "HUM_08",
         alias="human",
         description="Provides assistance and oversight when automated systems encounter issues or produce unreliable results."
@@ -245,6 +254,12 @@ class ProjectAgents(Enum):
         "REV_09",
         alias="reviwer",
         description="Responsible for evaluating code quality and ensuring adherence to coding standards. This includes reviewing code for clean code principles, naming conventions, and compliance with both internal and external standards."
+    )
+    prompt = AgentInfo(
+        "Prompt Enhancer",
+        "PRO_09",
+        alias="prompt",
+        description="Responsible for enhancing the user prompt in the project by improving the code structure, adhering to the predefined format, and using the user's input as a guide. This includes ensuring proper grammar, spelling, and style in the provided text."
     )
 
     @property
@@ -266,7 +281,7 @@ class ProjectAgents(Enum):
             str: The unique identifier of the agent.
         """
         return self.value.agent_id
-    
+
     @property
     def alias(self) -> str:
         """
@@ -286,11 +301,15 @@ class ProjectAgents(Enum):
             Optional[str]: The description of the agent, or None if not set.
         """
         return self.value.description
-    
+
+
 AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.supervisor.agent_id: AgentConfig(
         ProjectAgents.supervisor.agent_name,
         ProjectAgents.supervisor.agent_id,
+        ProjectAgents.supervisor.alias,
+        ProjectAgents.supervisor.description,
+
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0,
@@ -302,6 +321,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.architect.agent_id: AgentConfig(
         ProjectAgents.architect.agent_name,
         ProjectAgents.architect.agent_id,
+        ProjectAgents.architect.alias,
+        ProjectAgents.architect.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -313,6 +334,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.coder.agent_id: AgentConfig(
         ProjectAgents.coder.agent_name,
         ProjectAgents.coder.agent_id,
+        ProjectAgents.coder.alias,
+        ProjectAgents.coder.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -324,6 +347,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.rag.agent_id: AgentConfig(
         ProjectAgents.rag.agent_name,
         ProjectAgents.rag.agent_id,
+        ProjectAgents.rag.alias,
+        ProjectAgents.rag.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0,
@@ -335,6 +360,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.planner.agent_id: AgentConfig(
         ProjectAgents.planner.agent_name,
         ProjectAgents.planner.agent_id,
+        ProjectAgents.planner.alias,
+        ProjectAgents.planner.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -346,6 +373,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.tests_generator.agent_id: AgentConfig(
         ProjectAgents.tests_generator.agent_name,
         ProjectAgents.tests_generator.agent_id,
+        ProjectAgents.tests_generator.alias,
+        ProjectAgents.tests_generator.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -357,6 +386,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.modernizer.agent_id: AgentConfig(
         ProjectAgents.modernizer.agent_name,
         ProjectAgents.modernizer.agent_id,
+        ProjectAgents.modernizer.alias,
+        ProjectAgents.modernizer.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -368,6 +399,8 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.human.agent_id: AgentConfig(
         ProjectAgents.human.agent_name,
         ProjectAgents.human.agent_id,
+        ProjectAgents.human.alias,
+        ProjectAgents.human.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -379,6 +412,21 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
     ProjectAgents.reviewer.agent_id: AgentConfig(
         ProjectAgents.reviewer.agent_name,
         ProjectAgents.reviewer.agent_id,
+        ProjectAgents.reviewer.alias,
+        ProjectAgents.reviewer.description,
+        LLMConfig(
+            model="gpt-4o-2024-05-13",
+            temperature=0.3,
+            max_retries=5,
+            streaming=True,
+            model_kwargs={"seed": 4000, "top_p": 0.2}
+        )
+    ),
+    ProjectAgents.prompt.agent_id: AgentConfig(
+        ProjectAgents.prompt.agent_name,
+        ProjectAgents.prompt.agent_id,
+        ProjectAgents.prompt.alias,
+        ProjectAgents.prompt.description,
         LLMConfig(
             model="gpt-4o-2024-05-13",
             temperature=0.3,
@@ -388,6 +436,7 @@ AGENTS_CONFIG: Dict[str, AgentConfig] = {
         )
     )
 }
+
 
 class ProjectConfig:
     """
@@ -411,7 +460,7 @@ class ProjectConfig:
         self.vector_db_collections = {
             'MISMO-version-3.6-docs': os.path.join(os.getcwd(), "vector_collections")
         }
-    
+
     def __str__(self) -> str:
         """
         Returns a detailed string representation of the ProjectConfig instance.
@@ -486,13 +535,14 @@ class ProjectConfig:
         formatted_attributes = {
             key: format_value(value) for key, value in attributes.items()
         }
-        
+
         # Create a more informative string representation
         return (
             "Project Configuration:\n"
             "====================\n" +
             "\n".join(
-                f"{key}:\n{value}" if isinstance(value, (dict, list)) else f"{key}: {value}"
+                f"{key}:\n{value}" if isinstance(
+                    value, (dict, list)) else f"{key}: {value}"
                 for key, value in formatted_attributes.items()
             )
         )

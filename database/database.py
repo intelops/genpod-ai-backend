@@ -1,8 +1,10 @@
 import sqlite3
+from database.tables.metrics import Metrics
 
 from database.tables.microservices import Microservices
 from database.tables.projects import Projects
 from database.tables.sessions import Sessions
+from database.tables.tokens import Tokens
 from utils.logs.logging_utils import logger
 
 
@@ -15,7 +17,7 @@ class Database():
     """
 
     db_path: str
-    
+
     connection: sqlite3.Connection
     cursor: sqlite3.Cursor
 
@@ -23,6 +25,7 @@ class Database():
     projects_table: Projects
     microservices_table: Microservices
     sessions_table: Sessions
+    metrics_table: Metrics
 
     def __init__(self, db_path):
         """
@@ -41,6 +44,8 @@ class Database():
         self.projects_table = Projects(self.connection)
         self.microservices_table = Microservices(self.connection)
         self.sessions_table = Sessions(self.connection)
+        self.metrics_table = Metrics(self.connection)
+        self.tokens_table = Tokens(self.connection)
 
     def connect(self) -> sqlite3.Connection:
         """
@@ -51,15 +56,17 @@ class Database():
         """
 
         try:
-            logger.info(f"Connecting to the database at path: `{self.db_path}`")
+            logger.info(
+                f"Connecting to the database at path: `{self.db_path}`")
 
             sqCon = sqlite3.connect(self.db_path)
             logger.info(f"Database connection successful.")
 
             return sqCon
-        
+
         except sqlite3.Error as sqe:
-            logger.error(f"Error occurred while connecting to SQLite with db `{self.db_path}`: {sqe}")
+            logger.error(
+                f"Error occurred while connecting to SQLite with db `{self.db_path}`: {sqe}")
             raise
 
     def setup_db(self):
@@ -72,18 +79,24 @@ class Database():
         try:
             # Create projects table
             self.projects_table.create()
-            
+
             # Create microservice table
             self.microservices_table.create()
 
             # Create sessions table
             self.sessions_table.create()
 
+            # Create metrics table
+            self.metrics_table.create()
+
+            #  Create tokens table
+            self.tokens_table.create()
+
             self.connection.commit()
         except sqlite3.Error as sqe:
             logger.error(f"Error Occured while creating tables: {sqe}")
             raise
-    
+
     def close(self):
         """
         Closes the database connection.
@@ -96,4 +109,3 @@ class Database():
     def insert_into_projects(con: sqlite3.Connection, project_name: str, input_prompt: str) -> Projects:
         """
         """
-

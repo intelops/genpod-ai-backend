@@ -43,7 +43,7 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
         # prompts
         # backlog planner for each deliverable chain
         self.backlog_plan = self.prompts.backlog_planner_prompt | self.llm
-        
+
         # detailed requirements generator chain
         self.detailed_requirements = self.prompts.detailed_requirements_prompt | self.llm
 
@@ -115,7 +115,8 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
 
                 if generated_backlogs.content.startswith('```json') and generated_backlogs.content.endswith('```'):
                     # Remove the ```json prefix and ``` suffix
-                    cleaned_generated_backlogs = generated_backlogs.content.removeprefix('```json').removesuffix('```').strip()
+                    cleaned_generated_backlogs = generated_backlogs.content.removeprefix(
+                        '```json').removesuffix('```').strip()
                 else:
                     cleaned_generated_backlogs = generated_backlogs.content
 
@@ -134,7 +135,7 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
                 
                 logger.error(error_message)
                 self.error_messages.append(error_message)
-                
+
                 if self.error_count >= self.max_retries:
                     logger.info("Max retries reached. Halting")
                     self.error_count = 0
@@ -160,11 +161,12 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
                     # cleaned_response = re.sub(r'//.*$', '', cleaned_response, flags=re.MULTILINE)
                     # Remove multi-line comments
                     # cleaned_response = re.sub(r'/\*.*?\*/', '', cleaned_response, flags=re.DOTALL)
-                    
+
                     # Check if the text starts with ```json and ends with ```
                     if cleaned_response.startswith('```json') and cleaned_response.endswith('```'):
                         # Remove the ```json prefix and ``` suffix
-                        cleaned_json = cleaned_response.removeprefix('```json').removesuffix('```').strip()
+                        cleaned_json = cleaned_response.removeprefix(
+                            '```json').removesuffix('```').strip()
                     else:
                         # If not enclosed in code blocks, use the text as is
                         cleaned_json = cleaned_response
@@ -212,7 +214,7 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
                     logger.info("Error Message fed back to LLM: %s", error_message)
                     
                     self.error_messages.append(error_message)
-                    
+
                     if self.error_count >= self.max_retries:
                         logger.info("Max retries reached. Halting")
                         self.error_count = 0
@@ -241,16 +243,17 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
 
         # Split the response into lines
         lines = response.split('\n')
-        
+
         # Extract tasks using regex
         tasks = []
         for line in lines:
             # Match lines that start with numbers or bullet points
-            match = re.match(r'^(\d+\.|\*|\-)\s*\*{0,2}([^:]+)(:|\*{0,2})', line.strip())
+            match = re.match(
+                r'^(\d+\.|\*|\-)\s*\*{0,2}([^:]+)(:|\*{0,2})', line.strip())
             if match:
                 task = match.group(2).strip()
                 tasks.append(task)
-        
+
         return tasks
     
     def task_segregation(self, workpackage_name: str, requirements: dict) -> bool:
@@ -264,7 +267,8 @@ class PlannerAgent(Agent[PlannerState, PlannerPrompts]):
             })
 
             required_keys = ["taskType"]
-            missing_keys = [key for key in required_keys if key not in llm_response]
+            missing_keys = [
+                key for key in required_keys if key not in llm_response]
 
             if missing_keys:
                 raise KeyError(f"Missing keys: {missing_keys} in the response. Try Again!")
