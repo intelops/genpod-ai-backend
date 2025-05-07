@@ -1,1 +1,1 @@
-GenPod's LLM and AI backend codebase repo
+GenPod's backend codebase repo
