@@ -20,14 +20,23 @@ mcp_servers:
   locagent:
     enabled: true
     description: "LocAgent MCP server for codebase analysis, understanding, and navigation"
-    adfaaf: stdio
-    saffd: "locagent-mcp"
-    args: []
-    
+    transport: "stdio"
+    command: "locagent-mcp"
+    args: ["--locagent-path", "<path to LocAgent in the local>"]
+  
   # Chroma MCP Server - Vector database operations
   chroma:
     enabled: true
     description: "Chroma MCP server for vector database operations and semantic search"
-    transport: stdio
+    transport: "stdio"
     command: "chroma-mcp"
     args: ["--host", "0.0.0.0", "--port", "8000"]
+
+  # Task-Master MCP Server - Task management and PRD parsing
+  taskmaster:
+    enabled: true
+    description: "Task-Master MCP server for task management, PRD parsing, and project organization"
+    transport: "stdio"
+    command: "npx"
+    args: ["-y", "--package=task-master-ai", "task-master-ai"]
+    env:

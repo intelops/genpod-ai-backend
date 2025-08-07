@@ -14,11 +14,11 @@ class RAGInput(RAGQueryInput):
     pass
 
 
-class RAGOuput(RAGQueryOutput):
+class RAGOutput(RAGQueryOutput):
     """
     Output state for the RAG Agent.
 
-    Inherits all fields from RAGQueryOutput. No additional fields are defined.
+    Inherits all fields from RAGQueryOutput with additional RAG-specific fields.
     """
     pass
 

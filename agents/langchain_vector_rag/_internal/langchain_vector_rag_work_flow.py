@@ -11,7 +11,7 @@ from agents.langchain_vector_rag._internal.langchain_vector_rag_nodes import \
 from agents.langchain_vector_rag._internal.langchain_vector_rag_prompt import \
     RAGPrompts
 from agents.langchain_vector_rag._internal.langchain_vector_rag_state import (
-    RAGOuput, RAGState)
+    RAGOutput, RAGState)
 from apis.rag_analytics.controller import RAGAnalyticsController
 from context.context import GenpodContext
 from core.decorators import (handle_errors_and_reset, record_node,
@@ -375,7 +375,7 @@ class RAGWorkFlow(BaseWorkFlow[RAGPrompts]):
         return state
 
     @record_node(RAGNodeEnum.EXIT)
-    def exit_node(self, state: RAGState) -> RAGOuput:
+    def exit_node(self, state: RAGState) -> RAGOutput:
         """
         Exit node: Finalizes the workflow.
 
@@ -385,7 +385,7 @@ class RAGWorkFlow(BaseWorkFlow[RAGPrompts]):
             state (RAGState): The final state of the workflow.
 
         Returns:
-            RAGOuput: The final output state.
+            RAGOutput: The final output state.
         """
         func_name = "exit_node"
         logger.info("Agent '%s': %s - Finalizing workflow.", self.agent_name, func_name)

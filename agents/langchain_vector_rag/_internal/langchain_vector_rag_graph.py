@@ -3,7 +3,7 @@ from langgraph.graph import StateGraph
 from agents.langchain_vector_rag._internal.langchain_vector_rag_nodes import \
     RAGNodeEnum
 from agents.langchain_vector_rag._internal.langchain_vector_rag_state import (
-    RAGInput, RAGOuput, RAGState)
+    RAGInput, RAGOutput, RAGState)
 from agents.langchain_vector_rag._internal.langchain_vector_rag_work_flow import \
     RAGWorkFlow
 from core.graph import BaseGraph
@@ -52,7 +52,7 @@ class RAGGraph(BaseGraph[RAGWorkFlow]):
             StateGraph: The fully defined state graph for the RAG workflow.
         """
         logger.info("Defining the RAG workflow graph...")
-        rag_work_flow_graph = StateGraph(RAGState, input=RAGInput, output=RAGOuput)
+        rag_work_flow_graph = StateGraph(RAGState, input=RAGInput, output=RAGOutput)
 
         node_mapping = {
             RAGNodeEnum.ENTRY: self.work_flow.entry_node,

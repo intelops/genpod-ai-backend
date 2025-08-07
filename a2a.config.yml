@@ -1,0 +1,114 @@
+# A2A Protocol Configuration
+# This file configures all A2A-enabled agents and their settings
+
+# Global A2A settings
+default_timeout:
+  blocking: 600  # 10 minutes default
+  streaming: 1800  # 30 minutes default
+
+event_queue:
+  max_size: 1000
+  timeout: 0.5
+
+monitoring:
+  metrics_enabled: false
+  metrics_port: 9090
+  trace_enabled: false
+  trace_endpoint: "http://localhost:4318/v1/traces"
+
+service_discovery:
+  enabled: true
+  registry_url: "http://localhost:8000/registry"
+  health_check_interval: 30
+
+# Agent-specific configurations
+agents:
+  architect:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8001
+    description: "Generates comprehensive project architectures with requirements and task breakdowns"
+    timeout:
+      blocking: 600  # 10 minutes
+      streaming: 1800
+
+  coder:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8002
+    description: "Implements code based on specifications and requirements"
+    timeout:
+      blocking: 300  # 5 minutes
+      streaming: 900
+
+  reviewer:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8003
+    description: "Reviews code for quality, security, and best practices"
+    timeout:
+      blocking: 180  # 3 minutes
+      streaming: 600
+
+  planner:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8004
+    description: "Creates detailed project plans and task breakdowns"
+    timeout:
+      blocking: 240  # 4 minutes
+      streaming: 720
+
+  supervisor:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8005
+    description: "Orchestrates multiple agents to complete complex tasks"
+    timeout:
+      blocking: 900  # 15 minutes
+      streaming: 2400
+
+  tests_generator:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8006
+    description: "Generates comprehensive test suites for code"
+    timeout:
+      blocking: 300  # 5 minutes
+      streaming: 900
+
+  research:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8007
+    description: "Conducts research and gathers information on topics"
+    timeout:
+      blocking: 360  # 6 minutes
+      streaming: 1080
+
+  langchain_vector_rag:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8008
+    description: "Retrieval-augmented generation using LangChain vector stores"
+    timeout:
+      blocking: 120  # 2 minutes
+      streaming: 360
+
+  llama_index_vector_rag:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8009
+    description: "Retrieval-augmented generation using LlamaIndex"
+    timeout:
+      blocking: 120  # 2 minutes
+      streaming: 360
+
+  rag_middleware:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8010
+    description: "Middleware for routing requests to appropriate RAG agents"
+    timeout:
+      blocking: 180  # 3 minutes
+      streaming: 540

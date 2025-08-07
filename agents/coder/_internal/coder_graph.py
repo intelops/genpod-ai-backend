@@ -75,6 +75,7 @@ class CoderGraph(BaseGraph[CoderWorkFlow]):
                 str(CoderNodeEnum.CODE_GENERATION): str(CoderNodeEnum.CODE_GENERATION),
                 str(CoderNodeEnum.CODE_GENERATION_FROM_SKELETON): str(CoderNodeEnum.CODE_GENERATION_FROM_SKELETON),
                 str(CoderNodeEnum.RESOLVE_ISSUE): str(CoderNodeEnum.RESOLVE_ISSUE),
+                str(CoderNodeEnum.EXIT): str(CoderNodeEnum.EXIT),
             }
         )
 
