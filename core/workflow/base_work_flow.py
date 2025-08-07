@@ -46,7 +46,7 @@ class BaseWorkFlow(ABC, Generic[GenericAgentPrompt]):
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.prompts = prompts
-        self.__llm = llm
+        self.llm = llm  # Public access for MCP and other components
         self.use_rag = use_rag
         logger.info(f"Initialized {self.__class__.__name__} successfully.")
 
@@ -84,7 +84,7 @@ class BaseWorkFlow(ABC, Generic[GenericAgentPrompt]):
             LLMOutput[Union[str, dict, AIMessage]]: The output from the language model.
         """
         logger.debug(f"Invoking LLM with prompt: {prompt}, inputs: {prompt_inputs}, response_type: {response_type}")
-        output = self.__llm.invoke(prompt, prompt_inputs, response_type)
+        output = self.llm.invoke(prompt, prompt_inputs, response_type)
         logger.debug(f"LLM invocation completed with output: {output}")
         return output
 
@@ -107,6 +107,6 @@ class BaseWorkFlow(ABC, Generic[GenericAgentPrompt]):
             LLMOutput[TResponse]: The parsed output from the language model, conforming to the provided model.
         """
         logger.debug(f"Invoking LLM with pydantic model: {response_model.__name__} for prompt: {prompt} and inputs: {prompt_inputs}")
-        output = self.__llm.invoke_with_pydantic_model(prompt, prompt_inputs, response_model)
+        output = self.llm.invoke_with_pydantic_model(prompt, prompt_inputs, response_model)
         logger.debug(f"LLM invocation with pydantic model completed with output: {output}")
         return output

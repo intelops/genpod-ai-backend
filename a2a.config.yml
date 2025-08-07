@@ -112,3 +112,12 @@ agents:
     timeout:
       blocking: 180  # 3 minutes
       streaming: 540
+  
+  functional_tester:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8011
+    description: "Generates functional tests with adaptive framework selection"
+    timeout:
+      blocking: 300  # 5 minutes
+      streaming: 900
